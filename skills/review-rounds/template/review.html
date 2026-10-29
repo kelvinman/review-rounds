@@ -284,7 +284,7 @@ body.is-resizing { cursor: col-resize; user-select: none; }
 .composer { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--bg-input); }
 .composer:hover { border-color: var(--border-strong); }
 .composer:focus-within { border-color: var(--border-strong); }
-.composer textarea { border: 0; border-radius: var(--radius-lg) var(--radius-lg) 0 0; background: transparent; min-height: 48px; padding: var(--space-3) var(--space-3) var(--space-1); }
+.composer textarea { border: 0; border-radius: var(--radius-lg) var(--radius-lg) 0 0; background: transparent; min-height: 48px; max-height: 40vh; overflow-y: auto; padding: var(--space-3) var(--space-3) var(--space-1); }
 .composer textarea:hover, .composer textarea:focus { border: 0; }
 .composer .btns { display: flex; flex-wrap: wrap; gap: var(--space-2); padding: var(--space-2); }
 .composer .btns button { height: 28px; font-size: 14px; padding: 0 10px 0 8px; }
@@ -524,8 +524,11 @@ function composer(it) {
   const ta = el("textarea", { id: "c-" + it.id, rows: "1", placeholder: it.question ? "Your answer, and anything that should change" : "What should change, or your own wording", "aria-label": "Comment on " + (str(it.title) || it.id) });
   ta.value = str(s.comment);
   let t;
-  const grow = () => { ta.style.height = "auto"; ta.style.height = ta.scrollHeight + 2 + "px"; };
+  // Size the box to its text only once it has a width, and again whenever the width changes. In a frame that
+  // starts hidden it has none at first paint, and sizing then makes it one character wide and hundreds of lines tall.
+  const grow = () => { if (!ta.offsetWidth) return; ta.style.height = "auto"; ta.style.height = ta.scrollHeight + 2 + "px"; };
   requestAnimationFrame(grow);
+  try { let w = 0; new ResizeObserver(() => { if (ta.offsetWidth !== w) { w = ta.offsetWidth; grow(); } }).observe(ta); } catch {}
   ta.oninput = () => { grow(); clearTimeout(t); saved.textContent = "…"; t = setTimeout(() => save(it.id, { comment: ta.value }, saved), 700); };
   ta.onblur = () => { if (pendingRender) setTimeout(() => { if (!document.activeElement?.matches("textarea")) render(); }, 0); };
   // The comment box holds the three decisions along its bottom edge, like the app's message composer.
