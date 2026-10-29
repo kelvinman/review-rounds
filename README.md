@@ -69,4 +69,4 @@ Any Markdown file in the format in `reference/rules-format.md` works: a heading 
 
 ## Status
 
-Version 0.2.0. Tested end to end twice on made-up material: a hand-written batch over two rounds, and a sweep of a sample page with the copy starter rules, where an approved comment became rule 11. Released under the MIT licence.
+Version 0.2.0, early. So far it has only run on one claude.ai account, so if a review page won't save your decisions, please open an issue. Tested end to end twice on made-up material: a hand-written batch over two rounds, and a sweep of a sample page with the copy starter rules, where an approved comment became rule 11. Released under the MIT licence.
