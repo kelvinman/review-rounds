@@ -1,0 +1,690 @@
+<title>Review Rounds</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400..600&family=Source+Serif+4:opsz,wght@8..60,400&display=swap">
+<style>
+/* Layout: Kelvin App Workspace preset. Grey canvas, a left nav of pages, white panels: the intro, a sticky progress panel, one panel per site. */
+:root { --bg:#ffffff; --bg-canvas:#f3f3f1; --bg-panel:#fdfcfd; --bg-nav:#fcfcfb; --bg-band:#fafaf9; --bg-row:#ffffff; --bg-selection:#348ede; --on-selection:#ffffff; --bg-sidebar:#fbfbfb; --bg-muted:#f5f5f5; --bg-button:#f1f1f1; --bg-selected:#e7e7e7; --bg-input:#ffffff;
+  --border:#e0e0e0; --border-subtle:#ececec; --border-strong:#cfcfcf;
+  --text:#141414; --text-secondary:#6e6e6e; --text-placeholder:#8f8f8f; --link:#2c66a4; --focus:#3d84c0;
+  --strong:#141414; --on-strong:#ffffff; --success:#1f9643; --danger:#a5546c; --on-status:#ffffff;
+  --success-soft:rgba(31,150,67,.15); --danger-soft:rgba(229,72,77,.09);
+  --font-sans:Figtree, ui-sans-serif, system-ui, -apple-system, sans-serif; --font-serif:"Source Serif 4", Georgia, serif; --font-mono:ui-monospace, "SF Mono", Menlo, monospace;
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-6:24px; --space-8:32px;
+  --radius-sm:6px; --radius-md:8px; --radius-lg:12px; --radius-xl:20px; --radius-pill:999px; --control-height:32px; --tool-width:1080px; --nav-width:240px; --list-width:320px; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#181818; --bg-canvas:#121212; --bg-panel:#181818; --bg-nav:#181818; --bg-band:#1f1f1f; --bg-row:#181818; --bg-selection:#2f6fb0; --on-selection:#ffffff; --bg-sidebar:#1f1f1f; --bg-muted:#252525; --bg-button:#303030; --bg-selected:#3d3d3d; --bg-input:#303030;
+  --border:#404040; --border-subtle:#303030; --border-strong:#4d4d4d; --text:#ececec; --text-secondary:#a3a3a3; --text-placeholder:#7a7a7a;
+  --link:#6aaae8; --focus:#6aa8de; --strong:#ececec; --on-strong:#141414; --success:#6cc287; --danger:#ec8ba0; --on-status:#141414;
+  --success-soft:rgba(108,194,135,.18); --danger-soft:rgba(236,139,160,.16); color-scheme:dark } }
+:root[data-theme="dark"] { --bg:#181818; --bg-canvas:#121212; --bg-panel:#181818; --bg-nav:#181818; --bg-band:#1f1f1f; --bg-row:#181818; --bg-selection:#2f6fb0; --on-selection:#ffffff; --bg-sidebar:#1f1f1f; --bg-muted:#252525; --bg-button:#303030; --bg-selected:#3d3d3d; --bg-input:#303030;
+  --border:#404040; --border-subtle:#303030; --border-strong:#4d4d4d; --text:#ececec; --text-secondary:#a3a3a3; --text-placeholder:#7a7a7a;
+  --link:#6aaae8; --focus:#6aa8de; --strong:#ececec; --on-strong:#141414; --success:#6cc287; --danger:#ec8ba0; --on-status:#141414;
+  --success-soft:rgba(108,194,135,.18); --danger-soft:rgba(236,139,160,.16); color-scheme:dark }
+body { background: var(--bg-canvas); color: var(--text); font: 450 16px/24px var(--font-sans); -webkit-font-smoothing: antialiased; overflow-x: clip; }
+/* Dividers and the sticky bar run edge to edge of the pane, like the app's own rules; content keeps the gutter. */
+.bleed-rule { position: relative; }
+.bleed-rule::before { content: ""; position: absolute; left: calc(-1 * var(--space-8)); right: calc(-1 * var(--space-8)); top: 0; border-top: 1px solid var(--border-subtle); }
+.wrap { display: grid; grid-template-columns: var(--nav-width) minmax(0, 1fr); align-items: start; min-height: 100vh; }
+.main { padding: var(--space-3) max(var(--space-3), env(safe-area-inset-right, 0px)) 96px var(--space-3); }
+a { color: var(--link); text-underline-offset: 2px; }
+a:hover { text-decoration-thickness: 2px; }
+.muted, .label { color: var(--text-secondary); }
+.label { font-size: 14px; line-height: 20px; }
+code, .code { font: 13px/20px var(--font-mono); }
+header { display: flex; flex-direction: column; gap: var(--space-2); }
+header > * { max-width: 680px; }
+header h1 { font: 400 36px/44px var(--font-serif); letter-spacing: -0.01em; margin: 0 0 var(--space-2); text-wrap: balance; }
+header p { margin: 0; }
+.small { font-size: 14px; line-height: 20px; color: var(--text-secondary); }
+.copynote { background: var(--bg-muted); border-radius: var(--radius-lg); padding: var(--space-2) var(--space-3); font-size: 14px; line-height: 20px; color: var(--text-secondary); }
+.legend { display: flex; flex-wrap: wrap; gap: var(--space-4); }
+/* Panels: the intro, the sticky progress bar and each site sit in white panels on the canvas. */
+.main, .stack { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+.panel { background: var(--bg-panel); border: 1px solid var(--border-subtle); border-radius: var(--radius-xl); padding: var(--space-8); min-width: 0; container-type: inline-size; overflow: clip; }
+/* Left nav: a white sidebar the full height of the pane, as in the design system viewer: icon rows, the open count in grey after the name. */
+.nav { position: sticky; top: 0; height: 100vh; box-sizing: border-box; overflow-y: auto; background: var(--bg-nav); border-right: 1px solid var(--border-subtle);
+  display: flex; flex-direction: column; gap: 2px; padding: calc(env(safe-area-inset-top, 0px) + var(--space-2)) var(--space-2) var(--space-2) max(var(--space-2), env(safe-area-inset-left, 0px)); }
+.nav-label { display: flex; align-items: center; gap: var(--space-2); font-size: 13px; line-height: 18px; color: var(--text-secondary); padding: var(--space-3) var(--space-2) var(--space-1); }
+.nav-label:first-child { padding-top: var(--space-1); }
+.nav a { display: flex; align-items: center; gap: var(--space-2); min-height: 28px; padding: 0 var(--space-2); border-radius: var(--radius-md); color: var(--text); text-decoration: none; font-size: 14px; line-height: 20px; }
+.nav a:hover { background: var(--bg-muted); }
+.nav a svg.lucide { width: 16px; height: 16px; color: var(--text-secondary); }
+.nav a .current-tag { padding: 0 6px; font-size: 11px; line-height: 16px; background: var(--bg-row); box-shadow: inset 0 0 0 1px var(--border); color: var(--text); }
+.nav a .open { margin-left: auto; font-size: 13px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.progress { display: flex; flex-direction: column; gap: 6px; padding: var(--space-2) var(--space-2) 0; }
+.progress .top { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; line-height: 18px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.progress strong { font-weight: 600; color: var(--text); }
+.track { display: flex; height: 6px; border-radius: var(--radius-pill); background: var(--bg-muted); overflow: hidden; }
+.track span { display: block; height: 100%; transition: width .3s ease-out; }
+.track .t-yes { background: var(--success); }
+.track .t-no { background: var(--danger); }
+.track .t-keep { background: var(--text-secondary); }
+.counts { display: flex; flex-direction: column; gap: 2px; padding: var(--space-2) var(--space-2) var(--space-1); font-size: 13px; line-height: 18px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.filters { display: flex; gap: 2px; padding: 2px; border-radius: var(--radius-md); background: var(--bg-muted); margin: var(--space-1) 0 var(--space-2); }
+.filters button { flex: 1 1 auto; height: 28px; padding: 0 var(--space-2); border: 0; border-radius: var(--radius-sm); background: none; color: var(--text-secondary); font: 450 14px/20px var(--font-sans); white-space: nowrap; cursor: pointer; }
+.filters button:hover { color: var(--text); }
+.filters button[aria-pressed="true"] { background: var(--bg); color: var(--text); box-shadow: 0 0 0 1px var(--border-subtle); }
+/* The tracker anchors to the bottom of the nav, above a hairline. */
+/* Rules sit at the bottom of the nav as a compact Steps card. */
+.nav-rules { margin-top: auto; padding-top: var(--space-2); border-top: 1px solid var(--border-subtle); }
+.nav-rules .nav-label { padding-top: var(--space-2); }
+/* The key reads like the rules: a label, then rows with the sample in the number column. */
+.steps.key .step-num { width: auto; min-width: 52px; }
+.steps.key del, .steps.key ins { padding: 0 3px; border-radius: 3px; color: var(--text); font-size: 12px; }
+.steps.key del { text-decoration: line-through; text-decoration-color: var(--danger); background: var(--danger-soft); }
+.steps.key ins { text-decoration: none; background: var(--success-soft); }
+.nav-legend { display: flex; flex-wrap: wrap; gap: 4px var(--space-4); padding: var(--space-2) var(--space-2) var(--space-1); font-size: 13px; line-height: 18px; color: var(--text-secondary); }
+.nav-legend del, .nav-legend ins { padding: 0 3px; border-radius: 3px; color: var(--text); }
+.nav-legend del { text-decoration: line-through; text-decoration-color: var(--danger); background: var(--danger-soft); }
+.nav-legend ins { text-decoration: none; background: var(--success-soft); }
+/* In the nav the rules are plain rows, not a card. */
+.nav .steps { border: 0; border-radius: 0; background: none; padding: 0 var(--space-2) var(--space-2); }
+.nav .steps > li { gap: 6px; min-height: 24px; font-size: 13px; line-height: 18px; }
+.nav .steps .step-num { font-size: 12px; }
+.steps.mode-pad .step-num { width: 18px; font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+
+/* The tracker: a sticky bar the full width of the right side, on top as you scroll. */
+:root { --bar-h: 56px; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-6);
+  padding: var(--space-3) var(--space-6); background: var(--bg-panel); border-bottom: 1px solid var(--border-subtle); }
+.bar .progress { flex: 1 1 auto; flex-direction: row; align-items: center; gap: var(--space-4); padding: 0; }
+.bar .progress .top { flex: none; display: flex; align-items: center; gap: var(--space-2); }
+.b-count { flex: none; font-size: 14px; line-height: 20px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.b-count strong { color: var(--text); font-weight: 600; }
+.b-round { color: var(--text); font-weight: 600; }
+.bar .track { flex: 1 1 auto; }
+/* One line only: the count and the bar. The split by decision shows in the bar's colors and the list's dots. */
+.bar #p-pct, .bar .counts { display: none; }
+.nav-pages { display: flex; flex-direction: column; gap: 2px; padding-bottom: var(--space-4); }
+.btns { display: flex; gap: var(--space-2); align-items: center; flex-wrap: nowrap; }
+.btns button { font: 450 15px/20px var(--font-sans); height: var(--control-height); padding: 0 var(--space-3) 0 10px; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;
+  border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; }
+.btns button:hover { border-color: var(--border-strong); background: var(--bg-muted); }
+.btns .approve[aria-pressed="true"] { background: var(--success); border-color: var(--success); color: var(--on-status); }
+.btns .reject[aria-pressed="true"] { background: var(--danger); border-color: var(--danger); color: var(--on-status); }
+.btns .keep[aria-pressed="true"] { background: var(--strong); border-color: var(--strong); color: var(--on-strong); }
+button:focus-visible, a:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+/* Text fields focus like the app's composer: no ring, the border steps up. */
+textarea:focus { outline: none; border-color: var(--border-strong); }
+section.site { scroll-margin-top: var(--space-3); }
+section.site > h2 { font: 400 36px/44px var(--font-serif); letter-spacing: -0.01em; margin: 0; }
+.page { margin-top: var(--space-6); scroll-margin-top: var(--space-3); }
+.page > .label { display: flex; gap: var(--space-3); flex-wrap: wrap; padding-bottom: var(--space-2); }
+.page > .label span { color: var(--text); font-weight: 600; }
+.item { position: relative; padding-block: var(--space-6); display: grid; gap: var(--space-3); }
+.item[data-hidden] { display: none; }
+.head { display: flex; flex-wrap: wrap; gap: 6px var(--space-2); align-items: center; }
+.num { color: var(--text-secondary); font-variant-numeric: tabular-nums; font-size: 14px; margin-right: var(--space-1); }
+.title { font-weight: 600; margin-right: var(--space-1); }
+.tag { display: inline-flex; font-size: 12px; line-height: 16px; font-weight: 500; padding: 2px var(--space-2); border-radius: var(--radius-sm); background: var(--bg-muted); color: var(--text-secondary); white-space: nowrap; }
+.tag.lean { color: var(--link); }
+.tag.facts { }
+.where { font-size: 14px; line-height: 20px; color: var(--text-secondary); display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-4); }
+.why { max-width: 720px; margin: 0; }
+.split { display: grid; grid-template-columns: minmax(0, 640px) max-content; gap: 40px; align-items: start; justify-content: start; }
+.left { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+.diff { display: grid; gap: var(--space-3); }
+.diff > div { min-width: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.diff .after p, .diff .before p { background: var(--bg-muted); border-radius: var(--radius-lg); padding: var(--space-3) var(--space-4); }
+.diff p { margin: 0; white-space: pre-line; }
+.diff ins { text-decoration: none; background: var(--success-soft); border-radius: 3px; }
+.diff del { text-decoration: line-through; text-decoration-color: var(--danger); background: var(--danger-soft); border-radius: 3px; }
+.before p { color: var(--text-secondary); }
+.before p del { color: var(--text); }
+.legend del, .legend ins { padding: 0 3px; text-decoration: none; border-radius: 3px; }
+.legend del { text-decoration: line-through; text-decoration-color: var(--danger); background: var(--danger-soft); color: var(--text); }
+.legend ins { background: var(--success-soft); color: var(--text); }
+.note { font-size: 14px; line-height: 20px; color: var(--text-secondary); margin: 0; max-width: 720px; }
+.note b { color: var(--text); font-weight: 600; }
+.decide { display: flex; flex-direction: column; gap: var(--space-2); position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--bar-h) + var(--space-4)); }
+@container (max-width: 900px) { .split { grid-template-columns: minmax(0, 1fr); gap: var(--space-4); } .decide { position: static; } }
+/* The detail always fits its column: text and paths wrap, and the three buttons wrap only when the column is too narrow for them. */
+.detail .item, .detail .left, .detail .decide, .detail .diff > div { min-width: 0; }
+.detail .where span, .detail .why, .detail .diff p { overflow-wrap: anywhere; }
+@container (max-width: 470px) { .detail .btns { flex-wrap: wrap; } }
+textarea { width: 100%; box-sizing: border-box; font: 450 15px/22px var(--font-sans); color: var(--text); background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: var(--space-2) var(--space-3); min-height: 64px; resize: none; overflow: hidden; background: var(--bg-input); }
+textarea:hover { border-color: var(--border-strong); }
+textarea::placeholder { color: var(--text-placeholder); }
+.saved { font-size: 12px; line-height: 16px; color: var(--text-secondary); min-height: 16px; }
+.offline { margin-top: var(--space-4); color: var(--danger); font-size: 14px; }
+@media (max-width: 860px) { .split { grid-template-columns: 1fr; gap: var(--space-4); } .decide { position: static; } textarea { min-height: 56px; font-size: 16px; } .filters { margin-left: 0; }
+  .wrap { grid-template-columns: 1fr; min-height: 0; } .nav { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--border-subtle); flex-direction: row; flex-wrap: wrap; padding-left: max(16px, env(safe-area-inset-left, 0px)); } .nav-label, .nav-pages, .nav-rules { width: 100%; } .main { padding-left: max(var(--space-3), env(safe-area-inset-left, 0px)); } .panel { padding: var(--space-4); } .bleed-rule::before { left: calc(-1 * var(--space-4)); right: calc(-1 * var(--space-4)); } }
+/* Icons: Lucide outline, 16px, 1.75 stroke, currentColor, the way the app draws its own. */
+svg.lucide { width: 16px; height: 16px; stroke-width: 1.75; flex: none; }
+.iconed { display: inline-flex; align-items: center; gap: 6px; }
+.where svg.lucide, .page > .label svg.lucide { width: 14px; height: 14px; }
+section.site > h2 svg.lucide { width: 24px; height: 24px; color: var(--text-secondary); }
+.copynote { display: flex; gap: var(--space-2); align-items: flex-start; }
+.copynote svg.lucide { margin-top: 2px; }
+/* Steps (Kelvin App): the rules as a bordered list card, like the app's task list in the chat. */
+.rules-label { margin-top: var(--space-2); }
+.steps { list-style: none; margin: 0; padding: var(--space-3) var(--space-4); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); background: var(--bg); display: flex; flex-direction: column; }
+.steps > li { display: flex; align-items: baseline; padding-block: 3px; gap: var(--space-2); min-height: 28px; font-size: 15px; line-height: 20px; }
+.steps .step-num { flex: none; text-align: left; color: var(--text-secondary); font-size: 14px; font-variant-numeric: tabular-nums; }
+/* Tree and detail, like the design system viewer's Files view: sites, pages, items and their rounds on the left, the selected one on the right. */
+.browser { padding: 0; }
+.browser-body { display: grid; grid-template-columns: var(--list-width) minmax(0, 1fr); align-items: start; }
+/* The divider lives on a full-height column so it runs the whole way down, while the list inside it stays sticky. */
+.tree-col { align-self: stretch; background: var(--bg-row); border-right: 1px solid var(--border-subtle); min-width: 0; }
+.tree { position: sticky; top: var(--space-3); max-height: calc(100vh - var(--space-6)); overflow-y: auto; }
+.t-row { display: flex; align-items: center; gap: var(--space-2); padding: 0 var(--space-3); cursor: pointer; scroll-margin-top: var(--space-3); }
+.t-row:hover { background: var(--bg-muted); }
+.t-row[aria-selected="true"] { background: var(--bg-selected); }
+.t-row:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.t-twist { width: 16px; height: 16px; flex: none; display: inline-flex; align-items: center; justify-content: center; border: 0; padding: 0; background: none; color: inherit; cursor: pointer; }
+.t-twist svg.lucide { width: 14px; height: 14px; color: var(--text-secondary); transition: transform .15s ease-out; }
+.t-twist[aria-expanded="true"] svg.lucide { transform: rotate(90deg); }
+.t-twist.leaf { visibility: hidden; }
+.t-text { min-width: 0; display: flex; flex-direction: column; flex: 1; }
+.t-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.t-meta { font-size: 12px; line-height: 16px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Packed rows, every one closed by a hairline: a site is a quiet band, a page a bold row, an item a plain row. */
+.t-row { border-bottom: 1px solid var(--border-subtle); }
+.t-row.site { min-height: 32px; font-size: 13px; line-height: 18px; color: var(--text-secondary); background: var(--bg-sidebar); cursor: default; }
+.t-row.site:hover { background: var(--bg-sidebar); }
+.t-row.page { margin-top: 0; min-height: 36px; font-size: 14px; line-height: 20px; font-weight: 600; }
+.t-row.page .t-count { margin-left: auto; font-weight: 400; font-size: 13px; color: var(--text-secondary); }
+.t-row.item { min-height: 36px; font-size: 14px; line-height: 18px; }
+.t-row.round { min-height: 28px; font-size: 13px; line-height: 18px; color: var(--text-secondary); }
+.t-row.round[aria-selected="true"] { color: var(--text); }
+.t-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+/* An item's dot sits in the chevron's column, so its name lines up with the page name above. */
+.t-row.item .t-dot { margin: 0 4px; }
+.t-dot.approve { background: var(--success); } .t-dot.reject { background: var(--danger); } .t-dot.keep { background: var(--text-secondary); }
+.t-dot.open { box-shadow: inset 0 0 0 1.5px var(--text-secondary); } .t-dot.none { box-shadow: inset 0 0 0 1.5px var(--border-strong); }
+.layout-tabs { display: inline-flex; gap: 2px; padding: 2px; border-radius: var(--radius-md); background: var(--bg-muted); }
+.layout-tabs button { height: 26px; padding: 0 var(--space-3); border: 0; border-radius: var(--radius-sm); background: none; color: var(--text-secondary); font: 450 14px/20px var(--font-sans); cursor: pointer; }
+.layout-tabs button[aria-pressed="true"] { background: var(--bg); color: var(--text); box-shadow: 0 0 0 1px var(--border-subtle); }
+/* Full width: no canvas, no cards. Sections run to the pane's edges and are split by hairlines only. */
+body.flat { background: var(--bg-panel); }
+body.flat .main { padding: 0; gap: 0; min-height: 100vh; }
+/* The review fills the rest of the pane, so the list's divider reaches the bottom even when there's little in it. */
+body.flat .browser { flex: 1 1 auto; display: flex; flex-direction: column; }
+body.flat .browser-body { flex: 1 1 auto; }
+body.flat .panel { border: 0; border-radius: 0; border-bottom: 1px solid var(--border-subtle); background: var(--bg-panel); }
+body.flat header.panel { padding: var(--space-4) var(--space-6); }
+/* A short intro: one eyebrow, a modest title, one line of instructions. */
+header.intro { gap: var(--space-1); }
+header.intro h1 { font-size: 24px; line-height: 32px; margin: 0; }
+header.intro p { margin: 0; }
+body.flat .browser { border-bottom: 0; }
+/* The header starts in the same column as the chevrons and dots below it. */
+body.flat .tree { top: var(--bar-h); max-height: calc(100vh - var(--bar-h)); }
+.detail { padding: var(--space-6); min-width: 0; container-type: inline-size; }
+.detail .item { padding-block: 0; }
+.d-title { font: 400 28px/36px var(--font-serif); margin: 0; text-wrap: balance; }
+.d-rounds { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.past { display: flex; flex-direction: column; gap: var(--space-2); }
+.past .verdict { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.past .verdict.approve { color: var(--success); } .past .verdict.reject { color: var(--danger); }
+.past blockquote { margin: 0; padding: var(--space-3) var(--space-4); background: var(--bg-muted); border-radius: var(--radius-lg); }
+.empty { color: var(--text-secondary); }
+.ask { display: flex; flex-direction: column; gap: var(--space-2); }
+.ask .answer { width: 100%; box-sizing: border-box; min-height: var(--control-height); padding: 5px var(--space-3); resize: none; overflow: hidden;
+  font: 450 15px/22px var(--font-sans); color: var(--text); background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-lg); }
+.ask .answer:focus { outline: none; border-color: var(--border-strong); }
+.ask .answer:disabled { background: transparent; }
+/* One rhythm in the detail: 24px between blocks, 6px from a label to its content. Empty status text takes no space. */
+.detail .item { gap: var(--space-6); }
+.detail .split { gap: var(--space-6); }
+.detail .left { gap: var(--space-6); }
+.detail .diff { gap: var(--space-6); }
+.detail .diff > div { gap: 6px; }
+.detail .ask { display: flex; flex-direction: column; gap: 6px; margin: 0; }
+.detail .decide { gap: var(--space-2); }
+.detail .saved { min-height: 0; }
+.detail .saved:empty { display: none; }
+.q-text { margin: 0; }
+.d-head { display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-6); }
+/* The location line: plain grey text split by dots, the link quiet until hovered. */
+.detail .where { gap: var(--space-1) var(--space-4); font-size: 14px; }
+.detail .where .show-in-place { display: inline-flex; align-items: center; gap: 2px; color: var(--link); text-decoration: none; }
+.detail .where .show-in-place svg.lucide { width: 14px; height: 14px; }
+.detail .where .show-in-place:hover { text-decoration: underline; }
+/* Your response sits apart from what you're judging: a hairline, then the question and answer, then the decision. */
+.respond { display: flex; flex-direction: column; gap: var(--space-3); }
+/* Always docked like the app's composer: pinned to the bottom of the detail column, under a hairline that runs its full width. */
+.detail { --dp: var(--space-6); display: flex; flex-direction: column; min-height: calc(100vh - var(--bar-h)); box-sizing: border-box; }
+.detail .item { display: flex; flex-direction: column; flex: 1 1 auto; }
+.detail .respond { position: sticky; bottom: 0; z-index: 3; margin: auto calc(-1 * var(--dp)) calc(-1 * var(--dp)); padding: var(--space-3);
+  background: var(--bg-band); border-top: 1px solid var(--border-subtle); }
+.respond > .label { margin-bottom: -6px; }
+.respond .decide { position: static; }
+.round-tag { border: 0; cursor: pointer; font-family: var(--font-sans); }
+.nav a[aria-current="true"] { background: var(--bg-selected); }
+.detail .head .num, .detail .head .title { display: none; }
+@media (max-width: 860px) { .detail { --dp: var(--space-4); min-height: 0; } .browser-body { grid-template-columns: 1fr; } .tree-col { border-right: 0; } .tree { position: static; max-height: none; border-right: 0; border-bottom: 1px solid var(--border-subtle); } .detail { padding: var(--space-4); } }
+/* As in the design system viewer's file list: white rows and tracker, a grey band for sites, the blue selection, a grey detail area. */
+.t-row.page, .t-row.item { background: var(--bg-row); }
+.t-row.site, .t-row.site:hover { background: var(--bg-band); }
+.t-row.page:hover, .t-row.item:hover { background: var(--bg-sidebar); }
+.t-row[aria-selected="true"], .t-row[aria-selected="true"]:hover { background: var(--bg-selection); color: var(--on-selection); }
+.t-row[aria-selected="true"] .t-dot.open { box-shadow: inset 0 0 0 1.5px var(--on-selection); }
+/* On the blue, decided dots turn white, as icons do in a selected file row; the detail says which decision it was. */
+.t-row[aria-selected="true"] .t-dot:not(.open) { background: var(--on-selection); }
+body.flat .bar { background: var(--bg-row); }
+.detail { background: var(--bg-band); align-self: stretch; }
+/* Draggable dividers: a 7px grab strip over each line; it turns blue while hovered or dragged. Double-click resets. */
+.wrap { position: relative; }
+.tree-col { position: relative; }
+.drag { position: absolute; top: 0; bottom: 0; width: 7px; cursor: col-resize; z-index: 6; touch-action: none; }
+.drag::after { content: ""; position: absolute; top: 0; bottom: 0; left: 3px; width: 1px; background: transparent; transition: background .12s ease-out; }
+.drag:hover::after, .drag.is-dragging::after, .drag:focus-visible::after { width: 2px; left: 2px; background: var(--focus); }
+.drag:focus-visible { outline: none; }
+.drag-nav { position: fixed; left: calc(var(--nav-width) - 4px); height: 100vh; }
+.drag-list { right: -4px; }
+body.is-resizing { cursor: col-resize; user-select: none; }
+@media (max-width: 860px) { .drag { display: none; } }
+/* The floating "Add to comment" button that appears over selected text. */
+.quote-btn { position: fixed; z-index: 20; display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: var(--radius-md);
+  border: 1px solid var(--border); background: var(--bg); color: var(--text); font: 450 13px/18px var(--font-sans); cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+.quote-btn:hover { background: var(--bg-muted); }
+.quote-btn svg.lucide { width: 14px; height: 14px; }
+.composer { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--bg-input); }
+.composer:hover { border-color: var(--border-strong); }
+.composer:focus-within { border-color: var(--border-strong); }
+.composer textarea { border: 0; border-radius: var(--radius-lg) var(--radius-lg) 0 0; background: transparent; min-height: 48px; padding: var(--space-3) var(--space-3) var(--space-1); }
+.composer textarea:hover, .composer textarea:focus { border: 0; }
+.composer .btns { display: flex; flex-wrap: wrap; gap: var(--space-2); padding: var(--space-2); }
+.composer .btns button { height: 28px; font-size: 14px; padding: 0 10px 0 8px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+/* Generic additions: the empty state, earlier rounds on an item, and the reviewer's last comment. */
+[hidden] { display: none !important; }
+.empty-state { display: flex; flex-direction: column; gap: var(--space-4); max-width: 560px; padding: var(--space-8) var(--space-6); }
+.empty-state h1 { font: 400 28px/36px var(--font-serif); margin: 0; text-wrap: balance; }
+.empty-state p { margin: 0; }
+.empty-state .steps > li { align-items: baseline; }
+.nav-title { font-weight: 600; font-size: 14px; line-height: 20px; padding: var(--space-1) var(--space-2) 0; overflow-wrap: anywhere; }
+.thread { display: flex; flex-direction: column; gap: 6px; }
+.thread .d-rounds button { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 var(--space-2); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); font: 450 13px/18px var(--font-sans); cursor: pointer; }
+.thread .d-rounds button:hover { background: var(--bg-muted); }
+.thread blockquote { margin: 0; padding: var(--space-3) var(--space-4); background: var(--bg-muted); border-radius: var(--radius-lg); white-space: pre-line; overflow-wrap: anywhere; }
+.diff .placeholder { color: var(--text-placeholder); font-style: italic; }
+.rule-num { cursor: help; }
+body.is-empty .bar, body.is-empty .tree-col, body.is-empty .nav-rules { display: none; }
+body.is-empty .browser-body { grid-template-columns: minmax(0, 1fr); }
+</style>
+
+<div class="wrap">
+  <div class="drag drag-nav" id="drag-nav" role="separator" aria-orientation="vertical" aria-label="Resize the sidebar" tabindex="0"></div>
+  <nav class="nav" aria-label="Rounds and rules">
+    <div id="nav" class="nav-pages"></div>
+    <div class="nav-rules" id="nav-rules" hidden>
+      <span class="nav-label" id="rules-label">Rules</span>
+      <ol class="steps mode-pad" id="rules" aria-labelledby="rules-label"></ol>
+    </div>
+  </nav>
+  <div class="main">
+    <div class="bar" id="bar" role="region" aria-label="Progress">
+      <div class="progress" role="progressbar" aria-label="Reviewed" aria-valuemin="0" id="progress">
+        <div class="top"><span id="b-round" class="b-round">Round</span><span id="b-ro" class="tag" hidden>Read only</span></div>
+        <div class="track"><span class="t-yes" id="t-yes" style="width:0"></span><span class="t-no" id="t-no" style="width:0"></span><span class="t-keep" id="t-keep" style="width:0"></span></div>
+        <span class="b-count"><strong id="p-done">0</strong> of <span id="p-total">0</span> reviewed</span>
+      </div>
+    </div>
+
+    <p id="offline" class="offline" hidden>Your decisions can't be saved in this view, so they will only last until you close the page. Open it signed in on claude.ai to keep them.</p>
+
+    <section class="panel browser" aria-label="Every change and its rounds">
+      <div class="browser-body">
+        <div class="tree-col"><div class="drag drag-list" id="drag-list" role="separator" aria-orientation="vertical" aria-label="Resize the list" tabindex="0"></div><div class="tree" id="tree" role="tree" aria-label="Groups, subgroups and changes"></div></div>
+        <div class="detail" id="list"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script>
+// Review rounds template. Everything shown comes from the artifact's db; nothing about a particular review lives here.
+// Collections: review (doc "meta"), rounds, items, rules, decisions. The schema is in the skill's reference/schema.md.
+
+// "reject" is the stored value for Request changes.
+const CHOICES = [["approve", "Approve", "check"], ["reject", "Request changes", "pencil"], ["keep", "Keep current", "rotate-ccw"]];
+const VERDICT = { approve: "Approved", reject: "Changes requested", keep: "Kept as is" };
+const el = (tag, attrs = {}, kids = []) => {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v === undefined || v === null) continue;
+    if (k === "text") n.textContent = v; else n.setAttribute(k, v);
+  }
+  for (const c of [].concat(kids)) if (c) n.append(c);
+  return n;
+};
+const icon = (name) => el("i", { "data-lucide": name, "aria-hidden": "true" });
+const str = (v) => (typeof v === "string" ? v : v == null ? "" : String(v));
+const safeUrl = (u) => { try { const x = new URL(str(u)); return /^https?:$/.test(x.protocol) ? x.href : ""; } catch { return ""; } };
+
+// What the store holds. Rows are written by Claude (review, rounds, items, rules) and by reviewers (decisions).
+const S = { meta: {}, rounds: new Map(), items: new Map(), rules: new Map(), decisions: {} };
+let db = null, phase = "loading";       // loading, ready, offline
+let selRound = null, selId = null, pendingRender = false;
+const collapsed = new Set();
+
+// A thread is one change followed across rounds: an item names the earlier item it continues in `follows`.
+function threadOf(it, seen = new Set()) {
+  if (it.thread) return str(it.thread);
+  const prev = it.follows && S.items.get(str(it.follows));
+  if (prev && !seen.has(prev.id)) { seen.add(it.id); return threadOf(prev, seen); }
+  return it.id;
+}
+function model() {
+  const items = [...S.items.values()].filter((i) => Number.isFinite(+i.round) && +i.round > 0);
+  items.sort((a, b) => (+a.round - +b.round) || ((a.order ?? 1e9) - (b.order ?? 1e9)) || a.id.localeCompare(b.id));
+  const nums = new Set(items.map((i) => +i.round));
+  for (const r of S.rounds.values()) { const n = +(r.n ?? r.id); if (Number.isFinite(n) && n > 0) nums.add(n); }
+  const rounds = [...nums].sort((a, b) => a - b);
+  return { items, rounds, current: rounds.length ? rounds[rounds.length - 1] : null };
+}
+const inRound = (M, n) => M.items.filter((i) => +i.round === n);
+const verdictOf = (id) => str((S.decisions[id] || {}).status);
+const history = (M, it) => { const t = threadOf(it); return M.items.filter((i) => threadOf(i) === t); };
+
+function render() {
+  if (document.activeElement?.matches("textarea")) { pendingRender = true; counts(model()); return; }
+  pendingRender = false;
+  const M = model();
+  document.body.classList.toggle("is-empty", !M.items.length);
+  nav(M); drawRules();
+  if (!M.items.length) { emptyState(); return; }
+  if (!M.rounds.includes(selRound)) selRound = M.current;
+  const roundItems = inRound(M, selRound);
+  if (!roundItems.some((i) => i.id === selId)) selId = (roundItems.find((i) => !verdictOf(i.id)) || roundItems[0] || {}).id;
+  tree(M, roundItems);
+  detail(M);
+  counts(M);
+  document.getElementById("b-round").textContent = (S.rounds.get(String(selRound))?.title) || "Round " + selRound;
+  document.getElementById("b-ro").hidden = selRound === M.current;
+  icons();
+}
+function icons() { try { window.lucide?.createIcons({ attrs: { "stroke-width": 1.75 } }); } catch {} }
+
+// Shown before anything is in the store: what will appear here and how a review starts.
+function emptyState() {
+  const box = document.getElementById("list");
+  box.textContent = "";
+  const title = phase === "loading" ? "Opening the review" : phase === "offline" ? "This review can't load here" : "Nothing to review yet";
+  const lead = phase === "loading" ? "Loading the changes waiting for you."
+    : phase === "offline" ? "Open this page signed in on claude.ai to see the changes and record your decisions."
+    : "When Claude opens a round, each change it proposes shows up here, grouped by where it lives, with what's there now beside the rewrite.";
+  const steps = [
+    "Claude opens a round with the changes it proposes and why.",
+    "You approve each one, ask for changes, or keep what's there, and comment on any of them.",
+    "Claude applies what you approved and brings the rest back in the next round, with your comments beside them.",
+  ];
+  box.append(el("div", { class: "empty-state" }, [
+    el("span", { class: "label", text: str(S.meta.title) || "Review" }),
+    el("h1", { text: title }),
+    el("p", { class: "muted", text: lead }),
+    el("ol", { class: "steps mode-pad", "aria-label": "How a review works" },
+      steps.map((t, i) => el("li", {}, [el("span", { class: "step-num", text: String(i + 1).padStart(2, "0") }), el("span", { text: t })]))),
+  ]));
+}
+
+function tree(M, roundItems) {
+  const box = document.getElementById("tree");
+  const scroll = box.scrollTop;
+  box.textContent = "";
+  const groups = [...new Set(roundItems.map((i) => str(i.group) || "Other"))];
+  for (const g of groups) {
+    const gk = "g:" + g, inG = roundItems.filter((i) => (str(i.group) || "Other") === g);
+    box.append(row({ kind: "site", name: g, twist: !collapsed.has(gk), onTwist: () => toggle(gk) }));
+    if (collapsed.has(gk)) continue;
+    for (const sg of [...new Set(inG.map((i) => str(i.subgroup)))]) {
+      const list = inG.filter((i) => str(i.subgroup) === sg);
+      if (sg) {
+        const sk = gk + ":" + sg;
+        box.append(row({ kind: "page", name: sg, twist: !collapsed.has(sk), onTwist: () => toggle(sk) }));
+        if (collapsed.has(sk)) continue;
+      }
+      for (const it of list) box.append(row({ kind: "item", name: str(it.title) || it.id, dot: verdictOf(it.id) || "open", selected: it.id === selId, onPick: () => pick(it.id) }));
+    }
+  }
+  box.scrollTop = scroll;
+}
+function row({ kind, name, dot, selected = false, twist = null, onTwist, onPick }) {
+  const tw = el("button", { type: "button", class: "t-twist" + (twist === null ? " leaf" : ""), "aria-label": twist ? "Collapse" : "Expand", "aria-expanded": String(!!twist), tabindex: "-1" }, icon("chevron-right"));
+  if (twist !== null) tw.onclick = (e) => { e.stopPropagation(); onTwist(); };
+  const n = el("div", { class: "t-row " + kind, role: "treeitem", tabindex: kind === "site" ? "-1" : "0", "aria-selected": String(selected), style: "padding-left:12px" },
+    [twist === null && dot ? null : tw, dot ? el("span", { class: "t-dot " + dot, title: dot === "open" ? "Open" : VERDICT[dot] || "No decision" }) : null,
+     el("span", { class: "t-text" }, [el("span", { class: "t-name", text: name })])]);
+  n.onclick = onPick || (twist !== null ? onTwist : null);
+  n.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); n.click(); } };
+  return n;
+}
+function toggle(k) { collapsed.has(k) ? collapsed.delete(k) : collapsed.add(k); render(); }
+function pick(id) { const it = S.items.get(id); if (!it) return; selId = id; selRound = +it.round; render(); document.getElementById("list").scrollIntoView({ block: "nearest" }); }
+function pickRound(n) { selRound = n; selId = null; render(); }
+
+// The right side: the selected change in full. The newest round takes a decision; earlier rounds show what was decided.
+function detail(M) {
+  const box = document.getElementById("list");
+  box.textContent = "";
+  const it = S.items.get(selId); if (!it) return;
+  const live = +it.round === M.current;
+  const labels = S.meta.labels || {};
+  const head = el("div", { class: "d-head" }, [el("h2", { class: "d-title", text: str(it.title) || it.id })]);
+  const href = safeUrl(it.link);
+  const loc = str(it.location) || (href ? "Open" : "");
+  const where = el("div", { class: "where" }, [
+    loc ? (href ? el("a", { href, target: "_blank", rel: "noopener", class: "show-in-place", title: "Show in place" }, [el("span", { text: loc }), icon("arrow-up-right")]) : el("span", { text: loc })) : null,
+    ...[].concat(it.rules || []).map((r) => { const rule = S.rules.get(str(r)) || {}; return el("span", { class: "rule-num", title: str(rule.text) || null, text: str(rule.label) || str(r) }); }),
+  ]);
+  if (where.childNodes.length) head.append(where);
+  if (it.why) head.append(el("p", { class: "why", text: str(it.why) }));
+  box.append(head);
+
+  const art = el("article", { class: "item", id: "it-" + it.id });
+  const left = el("div", { class: "left" });
+  const thread = history(M, it).filter((i) => +i.round < +it.round);
+  if (thread.length) {
+    const prev = thread[thread.length - 1], pd = S.decisions[prev.id] || {};
+    left.append(el("div", { class: "thread" }, [
+      el("span", { class: "label", text: "Earlier rounds" }),
+      el("div", { class: "d-rounds" }, thread.map((p) => {
+        const b = el("button", { type: "button" }, [el("span", { class: "t-dot " + (verdictOf(p.id) || "none") }), el("span", { text: "Round " + p.round + " · " + (VERDICT[verdictOf(p.id)] || "No decision") })]);
+        b.onclick = () => pick(p.id);
+        return b;
+      })),
+      str(pd.comment).trim() ? el("span", { class: "label", text: "Your comment in round " + prev.round }) : null,
+      str(pd.comment).trim() ? el("blockquote", { text: str(pd.comment) }) : null,
+    ]));
+  }
+  const cur = str(it.current), next = str(it.rewrite);
+  const [oldParts, newParts] = wordDiff(cur, next);
+  left.append(el("div", { class: "diff" }, [
+    el("div", { class: "before" }, [el("span", { class: "label", text: str(labels.current) || "Current" }), el("p", {}, cur ? paint(oldParts, "del") : el("span", { class: "placeholder", text: "Nothing here yet" }))]),
+    el("div", { class: "after" }, [el("span", { class: "label", text: str(labels.rewrite) || "Rewrite" }), el("p", {}, next ? paint(newParts, "ins") : el("span", { class: "placeholder", text: "Removed" }))]),
+  ]));
+  if (it.note) left.append(el("p", { class: "note" }, [el("b", { text: "Note. " }), document.createTextNode(str(it.note))]));
+  art.append(el("div", { class: "split" }, [left]));
+
+  const respond = el("div", { class: "respond" });
+  if (it.question) respond.append(el("p", { class: "ask" }, [el("span", { class: "label", text: "Needs from you" }), el("span", { class: "q-text", text: str(it.question) })]));
+  respond.append(live ? composer(it) : past(it.id));
+  art.append(respond);
+  box.append(art);
+}
+function past(id) {
+  const s = S.decisions[id] || {};
+  const st = str(s.status);
+  const v = st ? el("span", { class: "verdict " + st }, [icon(st === "approve" ? "check" : st === "reject" ? "pencil" : "rotate-ccw"), el("span", { text: VERDICT[st] || st })])
+    : el("span", { class: "empty", text: "No decision recorded" });
+  return el("div", { class: "past decide" }, [el("span", { class: "label", text: "Your decision" }), v, str(s.comment) ? el("blockquote", { text: str(s.comment) }) : null]);
+}
+function composer(it) {
+  const s = S.decisions[it.id] || {};
+  const saved = el("span", { class: "saved", "aria-live": "polite" });
+  const buttons = CHOICES.map(([status, label, ic]) => {
+    const b = el("button", { type: "button", class: status, "data-status": status, "aria-pressed": String(str(s.status) === status) }, [icon(ic), el("span", { text: label })]);
+    b.onclick = () => setStatus(it.id, verdictOf(it.id) === status ? "" : status, saved);
+    return b;
+  });
+  const ta = el("textarea", { id: "c-" + it.id, rows: "1", placeholder: it.question ? "Your answer, and anything that should change" : "What should change, or your own wording", "aria-label": "Comment on " + (str(it.title) || it.id) });
+  ta.value = str(s.comment);
+  let t;
+  const grow = () => { ta.style.height = "auto"; ta.style.height = ta.scrollHeight + 2 + "px"; };
+  requestAnimationFrame(grow);
+  ta.oninput = () => { grow(); clearTimeout(t); saved.textContent = "…"; t = setTimeout(() => save(it.id, { comment: ta.value }, saved), 700); };
+  ta.onblur = () => { if (pendingRender) setTimeout(() => { if (!document.activeElement?.matches("textarea")) render(); }, 0); };
+  // The comment box holds the three decisions along its bottom edge, like the app's message composer.
+  return el("div", { class: "decide" }, [el("div", { class: "composer" }, [ta, el("div", { class: "btns" }, buttons)]), saved]);
+}
+
+// Word-level diff by longest common subsequence. Each side comes back as runs of [text, changed].
+function wordDiff(a, b) {
+  const split = (s) => s.split(/(\s+|[.,:;?!()"…])/).filter(Boolean);
+  const A = split(a), B = split(b);
+  const key = (t) => t.toLowerCase();
+  const L = Array.from({ length: A.length + 1 }, () => new Uint16Array(B.length + 1));
+  for (let i = A.length - 1; i >= 0; i--)
+    for (let j = B.length - 1; j >= 0; j--)
+      L[i][j] = key(A[i]) === key(B[j]) ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+  const ma = new Array(A.length).fill(true), mb = new Array(B.length).fill(true);
+  let i = 0, j = 0;
+  while (i < A.length && j < B.length) {
+    if (key(A[i]) === key(B[j])) { ma[i] = mb[j] = false; i++; j++; }
+    else if (L[i + 1][j] >= L[i][j + 1]) i++; else j++;
+  }
+  // A space kept between two changed words reads as part of the change, so the highlight doesn't break up.
+  const bridge = (T, m) => T.forEach((t, k) => { if (/^\s+$/.test(t) && !m[k] && m[k - 1] && m[k + 1]) m[k] = true; });
+  bridge(A, ma); bridge(B, mb);
+  const runs = (T, m) => T.reduce((out, t, k) => {
+    const last = out[out.length - 1];
+    if (last && last[1] === m[k]) last[0] += t; else out.push([t, m[k]]);
+    return out;
+  }, []);
+  return [runs(A, ma), runs(B, mb)];
+}
+function paint(parts, tag) { return parts.map(([t, changed]) => changed && t.trim() ? el(tag, { text: t }) : document.createTextNode(t)); }
+
+function setStatus(id, status, saved) {
+  S.decisions[id] = { ...(S.decisions[id] || {}), status };
+  save(id, { status }, saved);
+  render();
+}
+async function save(id, patch, saved) {
+  S.decisions[id] = { ...(S.decisions[id] || {}), ...patch };
+  counts(model());
+  if (!db) { saved.textContent = "not saved"; return; }
+  const s = S.decisions[id];
+  try {
+    await db.collection("decisions").doc(id).set({ status: str(s.status), comment: str(s.comment), round: +(S.items.get(id)?.round) || null, at: new Date().toISOString() });
+    saved.textContent = "saved";
+  } catch (e) { saved.textContent = e?.code === "permission_denied" || e?.code === "not_granted" ? "you can view this review but not decide on it" : "couldn't save, try again"; }
+}
+
+function counts(M) {
+  if (selRound == null) return;
+  const v = inRound(M, selRound).map((i) => S.decisions[i.id] || {});
+  const total = v.length || 1;
+  const yes = v.filter((s) => s.status === "approve").length, no = v.filter((s) => s.status === "reject").length, keep = v.filter((s) => s.status === "keep").length;
+  document.getElementById("p-done").textContent = yes + no + keep;
+  document.getElementById("p-total").textContent = v.length;
+  document.getElementById("t-yes").style.width = (yes / total) * 100 + "%";
+  document.getElementById("t-no").style.width = (no / total) * 100 + "%";
+  document.getElementById("t-keep").style.width = (keep / total) * 100 + "%";
+  const bar = document.getElementById("progress");
+  bar.setAttribute("aria-valuemax", v.length); bar.setAttribute("aria-valuenow", yes + no + keep);
+}
+
+// Left nav: the review's name, then one row per round, newest first, with what's still open in it.
+function nav(M) {
+  const box = document.getElementById("nav");
+  box.textContent = "";
+  box.append(el("div", { class: "nav-title", text: str(S.meta.title) || "Review" }));
+  if (!M.rounds.length) return;
+  box.append(el("div", { class: "nav-label" }, [el("span", { text: "Rounds" })]));
+  for (const n of [...M.rounds].reverse()) {
+    const open = inRound(M, n).filter((i) => !verdictOf(i.id)).length;
+    const a = el("a", { href: "#", "aria-current": String(n === selRound) }, [el("span", { text: "Round " + n }), open ? el("span", { class: "open", text: String(open) }) : null]);
+    a.onclick = (e) => { e.preventDefault(); pickRound(n); };
+    box.append(a);
+  }
+}
+function drawRules() {
+  const rules = [...S.rules.values()].sort((a, b) => ((a.order ?? 1e9) - (b.order ?? 1e9)) || a.id.localeCompare(b.id, undefined, { numeric: true }));
+  document.getElementById("nav-rules").hidden = !rules.length;
+  document.getElementById("rules").replaceChildren(...rules.map((r) => el("li", {}, [
+    el("span", { class: "step-num", text: str(r.label) || r.id }), el("span", { text: str(r.text) })])));
+}
+
+// Layout: Kelvin App Workspace, full width. Sections run to the pane's edges, split by hairlines only.
+document.body.classList.add("flat");
+try { new ResizeObserver(([e]) => document.documentElement.style.setProperty("--bar-h", Math.ceil(e.target.getBoundingClientRect().height) + "px")).observe(document.getElementById("bar")); } catch {}
+
+// Draggable dividers between the nav and the review, and between the list and the detail. Widths are remembered per viewer.
+function resizer(id, prop, min, max, edge) {
+  const h = document.getElementById(id), root = document.documentElement;
+  const set = (w) => { w = Math.round(Math.min(max, Math.max(min, w))); root.style.setProperty(prop, w + "px"); h.setAttribute("aria-valuenow", w); return w; };
+  try { const saved = +localStorage.getItem(prop); if (saved) set(saved); } catch {}
+  const save = (w) => { try { localStorage.setItem(prop, w); } catch {} };
+  h.addEventListener("pointerdown", (e) => {
+    e.preventDefault(); h.setPointerCapture(e.pointerId); h.classList.add("is-dragging"); document.body.classList.add("is-resizing");
+    const move = (ev) => set(ev.clientX - edge());
+    const up = () => { h.classList.remove("is-dragging"); document.body.classList.remove("is-resizing"); save(parseInt(getComputedStyle(root).getPropertyValue(prop))); h.removeEventListener("pointermove", move); h.removeEventListener("pointerup", up); };
+    h.addEventListener("pointermove", move); h.addEventListener("pointerup", up);
+  });
+  h.addEventListener("dblclick", () => { root.style.removeProperty(prop); try { localStorage.removeItem(prop); } catch {} });
+  h.addEventListener("keydown", (e) => {
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    e.preventDefault(); save(set(parseInt(getComputedStyle(root).getPropertyValue(prop)) + (e.key === "ArrowLeft" ? -16 : 16)));
+  });
+  h.setAttribute("aria-valuemin", min); h.setAttribute("aria-valuemax", max);
+}
+resizer("drag-nav", "--nav-width", 180, 420, () => 0);
+resizer("drag-list", "--list-width", 220, 560, () => document.querySelector(".tree-col").getBoundingClientRect().left);
+
+// Select any text in the detail and add it to the comment, quoted, as a starting point.
+const quoteBtn = el("button", { type: "button", class: "quote-btn", hidden: "" }, [icon("message-square-plus"), el("span", { text: "Add to comment" })]);
+document.body.append(quoteBtn);
+let quoteText = "";
+function placeQuote() {
+  const sel = window.getSelection();
+  const text = sel && !sel.isCollapsed ? sel.toString().trim() : "";
+  const box = document.getElementById("list");
+  const ta = box.querySelector("textarea:not([disabled])");
+  if (!text || !ta || !box.contains(sel.anchorNode) || ta.contains(sel.anchorNode)) { quoteBtn.hidden = true; return; }
+  quoteText = text;
+  const rect = sel.getRangeAt(0).getBoundingClientRect();
+  quoteBtn.hidden = false;
+  quoteBtn.style.left = Math.max(8, Math.min(window.innerWidth - quoteBtn.offsetWidth - 8, rect.left + rect.width / 2 - quoteBtn.offsetWidth / 2)) + "px";
+  quoteBtn.style.top = Math.max(8, rect.top - quoteBtn.offsetHeight - 8) + "px";
+}
+document.addEventListener("mouseup", () => setTimeout(placeQuote, 0));
+document.addEventListener("keyup", (e) => { if (e.shiftKey) placeQuote(); });
+document.addEventListener("scroll", () => { quoteBtn.hidden = true; }, true);
+quoteBtn.addEventListener("mousedown", (e) => e.preventDefault());
+quoteBtn.onclick = () => {
+  const ta = document.getElementById("list").querySelector("textarea:not([disabled])");
+  if (!ta || !quoteText) return;
+  ta.value = (ta.value.trim() ? ta.value.replace(/\s+$/, "") + "\n" : "") + "“" + quoteText + "” ";
+  ta.dispatchEvent(new Event("input"));
+  ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length);
+  window.getSelection().removeAllRanges(); quoteBtn.hidden = true;
+};
+
+render();
+
+// Subscribe once to each collection. The page renders whatever is there, and redraws as Claude or a reviewer writes.
+(async () => {
+  try { db = await window.claude?.use?.("db"); } catch { db = null; }
+  if (!db) { phase = "offline"; document.getElementById("offline").hidden = false; render(); return; }
+  const fail = () => { phase = "offline"; document.getElementById("offline").hidden = false; render(); };
+  const rows = (snap) => snap.docs.filter((d) => d.exists).map((d) => ({ ...(d.data() || {}), id: d.id }));
+  db.collection("review").onSnapshot((snap) => { S.meta = rows(snap).find((d) => d.id === "meta") || {}; render(); }, fail);
+  db.collection("rounds").onSnapshot((snap) => { S.rounds = new Map(rows(snap).map((d) => [d.id, d])); render(); }, fail);
+  db.collection("rules").onSnapshot((snap) => { S.rules = new Map(rows(snap).map((d) => [d.id, d])); render(); }, fail);
+  db.collection("items").onSnapshot((snap) => { S.items = new Map(rows(snap).map((d) => [d.id, d])); phase = "ready"; render(); }, fail);
+  db.collection("decisions").onSnapshot((snap) => {
+    const next = {};
+    for (const d of rows(snap)) next[d.id] = { status: str(d.status), comment: str(d.comment) };
+    // Keep what this viewer is typing; take everything else from the store.
+    const typing = document.activeElement?.id?.startsWith("c-") ? document.activeElement.id.slice(2) : null;
+    if (typing && S.decisions[typing]) next[typing] = { ...next[typing], comment: S.decisions[typing].comment };
+    S.decisions = next;
+    render();
+  }, fail);
+})();
+</script>

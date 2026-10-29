@@ -1,0 +1,17 @@
+{
+  "name": "review-rounds",
+  "version": "0.2.0",
+  "description": "Sweep copy, docs or UI text against your house rules and review every proposed change in rounds on a private claude.ai page. Rules live in your project and learn from your comments.",
+  "author": {
+    "name": "Kelvin Man"
+  },
+  "license": "MIT",
+  "keywords": [
+    "review",
+    "approval",
+    "copy",
+    "qa",
+    "artifact"
+  ],
+  "skills": "./skills"
+}

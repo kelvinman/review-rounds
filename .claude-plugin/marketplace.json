@@ -1,0 +1,17 @@
+{
+  "name": "kelvinman",
+  "owner": {
+    "name": "Kelvin Man"
+  },
+  "metadata": {
+    "description": "Claude Code plugins by Kelvin Man.",
+    "version": "0.2.0"
+  },
+  "plugins": [
+    {
+      "name": "review-rounds",
+      "source": "./",
+      "description": "Review a batch of AI-proposed changes in rounds, on a private claude.ai page."
+    }
+  ]
+}
