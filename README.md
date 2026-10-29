@@ -24,11 +24,7 @@ skills/review-rounds/template/review.html   the review page
 
 In your project the plugin keeps two files: `review-rules.md` (your rules, edit it by hand any time) and `.review-rounds.json` (the review page's link, which rule files to use, and where your material lives).
 
-![Round 2 of a review: the reviewer's comment from round 1 above the new rewrite](docs/round.png)
-
-![A rule Claude learned from a reviewer's comment, waiting for approval](docs/new-rule.png)
-
-<!-- Screen recording of one round goes here: demo.mp4 or demo.gif, about 30 seconds. -->
+![One review: a comment in round 1, the rewrite it led to in round 2, and a rule learned from it](docs/demo.gif)
 
 ## Install
 
